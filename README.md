@@ -16,7 +16,7 @@ UrbanSentinel transforms unstructured public signals into **prioritized, actiona
 
 The system:
 - Aggregates multi-source public text signals (news, citizen reports, social media, government)
-- Uses LLMs to extract structured risk metadata (category, severity, economic impact)
+- Uses a **hybrid ML + keyword NLP engine** to extract structured risk metadata (category, severity, economic impact)
 - Computes weighted priority scores for institutional decision support
 - Visualizes risk distribution via an interactive dashboard
 
@@ -31,10 +31,21 @@ Public Signals (news / reports / social / government)
    FastAPI Backend
         │
         ▼
-  NLP Risk Classifier ──► Structured JSON output
-        │                 (category, risk_level, economic_impact,
-        │                  confidence, keywords, summary)
-        ▼
+  ┌─────────────────────────┐
+  │  Hybrid NLP Classifier  │
+  │  ┌───────┐ ┌─────────┐  │
+  │  │Keyword│ │ TF-IDF  │  │
+  │  │ Rules │ │+ NaiveBa│  │
+  │  │ (60%) │ │yes(40%) │  │
+  │  └───┬───┘ └────┬────┘  │
+  │      └─────┬────┘       │
+  │         Fusion          │
+  └────────────┬────────────┘
+               ▼
+  Structured JSON output
+  (category, risk_level, economic_impact,
+   confidence, keywords, summary)
+               ▼
   Priority Scoring Engine
         │
         │  Score = 0.4×Risk + 0.3×Economic + 0.2×Credibility + 0.1×Recency
@@ -49,7 +60,8 @@ Public Signals (news / reports / social / government)
 | Layer | Technology |
 |-------|-----------|
 | Backend API | Python, FastAPI |
-| AI Engine | Keyword-based NLP Risk Classifier |
+| AI Engine | TF-IDF + Naive Bayes + Keyword Rules (hybrid) |
+| ML Framework | scikit-learn |
 | Scoring | Custom weighted priority algorithm |
 | Dashboard | Streamlit |
 | Data Processing | Pandas |
@@ -81,18 +93,19 @@ uvicorn backend.main:app --reload
 
 ## Testing
 
-36 unit tests covering all core modules:
+46 unit tests covering all core modules:
 
 ```bash
 pytest tests/ -v
 ```
 
 ```
-tests/test_analyzer.py  — 18 tests (category matching, severity assessment, full pipeline)
-tests/test_scorer.py    — 12 tests (recency weight, priority computation, ranking)
-tests/test_models.py    —  6 tests (Pydantic validation, boundary checks)
+tests/test_analyzer.py       — 18 tests (category matching, severity, hybrid pipeline)
+tests/test_ml_classifier.py  — 10 tests (TF-IDF prediction, preprocessing, confidence)
+tests/test_scorer.py         — 12 tests (recency weight, priority computation, ranking)
+tests/test_models.py         —  6 tests (Pydantic validation, boundary checks)
 
-============================== 36 passed ==============================
+============================== 46 passed ==============================
 ```
 
 ---
@@ -116,10 +129,11 @@ Priority Score = 0.4 × Risk Level + 0.3 × Economic Impact + 0.2 × Source Cred
 
 ## Innovation
 
+- **Hybrid AI classification** — combines TF-IDF + Naive Bayes ML model with keyword rules for robust, explainable predictions
 - Goes beyond text classification — builds a **decision-support system**
 - Converts qualitative risk narratives into **quantifiable indicators**
 - Explainable scoring model (not a black box)
-- Lightweight, deployable in low-resource municipal environments
+- Lightweight, deployable in low-resource municipal environments — no external API keys required
 
 ---
 
@@ -138,19 +152,21 @@ Priority Score = 0.4 × Risk Level + 0.3 × Economic Impact + 0.2 × Source Cred
 UrbanSentinel/
 ├── backend/
 │   ├── __init__.py
-│   ├── main.py          # FastAPI application
-│   ├── models.py         # Pydantic data schemas
-│   ├── analyzer.py       # NLP risk classifier
-│   └── scorer.py         # Priority scoring algorithm
+│   ├── main.py            # FastAPI application
+│   ├── models.py           # Pydantic data schemas
+│   ├── analyzer.py         # Hybrid keyword + ML classifier
+│   ├── ml_classifier.py    # TF-IDF + Naive Bayes pipeline
+│   └── scorer.py           # Priority scoring algorithm
 ├── dashboard/
 │   └── app.py            # Streamlit visualization
 ├── data/
 │   └── sample_signals.json
 ├── tests/
-│   ├── conftest.py        # Test configuration
-│   ├── test_analyzer.py   # 18 tests — category matching, severity, integration
-│   ├── test_scorer.py     # 12 tests — priority scoring, recency, ranking
-│   └── test_models.py     #  6 tests — Pydantic validation
+│   ├── conftest.py            # Test configuration
+│   ├── test_analyzer.py       # 18 tests — category matching, severity, integration
+│   ├── test_ml_classifier.py  # 10 tests — TF-IDF prediction, preprocessing
+│   ├── test_scorer.py         # 12 tests — priority scoring, recency, ranking
+│   └── test_models.py         #  6 tests — Pydantic validation
 ├── config.py
 ├── requirements.txt
 └── README.md

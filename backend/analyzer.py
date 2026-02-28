@@ -1,6 +1,7 @@
 import re
 from typing import List, Tuple
 from backend.models import RiskAnalysis, RiskCategory, EconomicImpact, Signal
+from backend.ml_classifier import get_classifier
 
 
 # ── Keyword rules for classification ─────────────────────────
@@ -75,14 +76,39 @@ def _assess_severity(text: str) -> Tuple[int, EconomicImpact]:
     return 1, EconomicImpact.low
 
 
-def analyze_signal(signal: Signal) -> RiskAnalysis:
-    """Analyze a signal using keyword-based NLP (no external API needed)."""
-    text = signal.text
-    category, keywords = _match_category(text)
-    risk_level, economic_impact = _assess_severity(text)
+def _hybrid_classify(text: str) -> Tuple[RiskCategory, List[str], float]:
+    """Combine keyword matching (60%) with ML prediction (40%) for classification."""
+    kw_category, keywords = _match_category(text)
+    kw_confidence = min(0.95, 0.5 + len(keywords) * 0.1)
 
-    # Confidence based on keyword match strength
-    confidence = min(0.95, 0.5 + len(keywords) * 0.1)
+    clf = get_classifier()
+    ml_category, ml_confidence = clf.predict(text)
+
+    # If both agree, boost confidence
+    if kw_category == ml_category:
+        final_category = kw_category
+        final_confidence = min(0.95, kw_confidence * 0.6 + ml_confidence * 0.4 + 0.05)
+    elif len(keywords) >= 2:
+        # Strong keyword match wins
+        final_category = kw_category
+        final_confidence = kw_confidence * 0.7 + ml_confidence * 0.3
+    elif ml_confidence > 0.6:
+        # ML is confident and keywords are weak
+        final_category = ml_category
+        final_confidence = ml_confidence * 0.6 + kw_confidence * 0.4
+    else:
+        # Default to keyword result
+        final_category = kw_category
+        final_confidence = kw_confidence * 0.6 + ml_confidence * 0.4
+
+    return final_category, keywords, round(min(final_confidence, 0.95), 2)
+
+
+def analyze_signal(signal: Signal) -> RiskAnalysis:
+    """Analyze a signal using hybrid keyword + ML classification."""
+    text = signal.text
+    category, keywords, confidence = _hybrid_classify(text)
+    risk_level, economic_impact = _assess_severity(text)
 
     # Generate summary from first sentence
     first_sentence = text.split(".")[0].strip()
@@ -92,7 +118,7 @@ def analyze_signal(signal: Signal) -> RiskAnalysis:
         category=category,
         risk_level=risk_level,
         economic_impact=economic_impact,
-        confidence=round(confidence, 2),
+        confidence=confidence,
         keywords=keywords if keywords else [category.value.lower()],
         summary=summary,
     )
