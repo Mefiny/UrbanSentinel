@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from typing import List, Tuple
 from backend.models import Signal, RiskAnalysis, PrioritizedAlert, EconomicImpact
 from config import W_RISK, W_ECONOMIC, W_CREDIBILITY, W_RECENCY, SOURCE_CREDIBILITY
 
@@ -38,8 +39,8 @@ def compute_priority(signal: Signal, analysis: RiskAnalysis) -> float:
 
 
 def prioritize_alerts(
-    pairs: list[tuple[Signal, RiskAnalysis]],
-) -> list[PrioritizedAlert]:
+    pairs: List[Tuple[Signal, RiskAnalysis]],
+) -> List[PrioritizedAlert]:
     """Score and rank a list of (signal, analysis) pairs."""
     alerts = []
     for signal, analysis in pairs:

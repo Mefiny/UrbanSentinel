@@ -1,4 +1,5 @@
 import json
+from typing import List
 from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -23,13 +24,13 @@ app.add_middleware(
 DATA_PATH = Path(__file__).parent.parent / "data" / "sample_signals.json"
 
 
-def _load_signals() -> list[Signal]:
+def _load_signals() -> List[Signal]:
     with open(DATA_PATH, encoding="utf-8") as f:
         raw = json.load(f)
     return [Signal(**item) for item in raw]
 
 
-@app.get("/signals", response_model=list[Signal])
+@app.get("/signals", response_model=List[Signal])
 def get_signals():
     """Return all raw signals."""
     return _load_signals()
@@ -49,7 +50,7 @@ def analyze_single(signal: Signal):
     )
 
 
-@app.post("/analyze/batch", response_model=list[PrioritizedAlert])
+@app.post("/analyze/batch", response_model=List[PrioritizedAlert])
 def analyze_batch():
     """Analyze all sample signals and return ranked alerts."""
     signals = _load_signals()

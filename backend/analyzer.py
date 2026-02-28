@@ -1,4 +1,5 @@
 import re
+from typing import List, Tuple
 from backend.models import RiskAnalysis, RiskCategory, EconomicImpact, Signal
 
 
@@ -40,12 +41,12 @@ MEDIUM_SEVERITY = [
 ]
 
 
-def _match_category(text: str) -> tuple[RiskCategory, list[str]]:
+def _match_category(text: str) -> Tuple[RiskCategory, List[str]]:
     """Match text against keyword rules, return category and matched keywords."""
     text_lower = text.lower()
     best_cat = RiskCategory.infrastructure
     best_score = 0
-    matched_kw: list[str] = []
+    matched_kw: List[str] = []
 
     for cat, keywords in CATEGORY_KEYWORDS.items():
         hits = [kw for kw in keywords if kw in text_lower]
@@ -57,7 +58,7 @@ def _match_category(text: str) -> tuple[RiskCategory, list[str]]:
     return best_cat, matched_kw[:5]
 
 
-def _assess_severity(text: str) -> tuple[int, EconomicImpact]:
+def _assess_severity(text: str) -> Tuple[int, EconomicImpact]:
     """Assess risk level (1-5) and economic impact from text."""
     text_lower = text.lower()
     high_hits = sum(1 for kw in HIGH_SEVERITY if kw in text_lower)

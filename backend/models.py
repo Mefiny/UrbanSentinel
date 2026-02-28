@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import List
 from datetime import datetime
 from enum import Enum
 from pydantic import BaseModel, Field
@@ -39,7 +40,7 @@ class RiskAnalysis(BaseModel):
     risk_level: int = Field(ge=1, le=5)
     economic_impact: EconomicImpact
     confidence: float = Field(ge=0.0, le=1.0)
-    keywords: list[str]
+    keywords: List[str]
     summary: str
 
 
