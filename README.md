@@ -79,6 +79,24 @@ uvicorn backend.main:app --reload
 
 ---
 
+## Testing
+
+36 unit tests covering all core modules:
+
+```bash
+pytest tests/ -v
+```
+
+```
+tests/test_analyzer.py  — 18 tests (category matching, severity assessment, full pipeline)
+tests/test_scorer.py    — 12 tests (recency weight, priority computation, ranking)
+tests/test_models.py    —  6 tests (Pydantic validation, boundary checks)
+
+============================== 36 passed ==============================
+```
+
+---
+
 ## Priority Scoring Algorithm
 
 Each signal receives a weighted priority score:
@@ -128,6 +146,11 @@ UrbanSentinel/
 │   └── app.py            # Streamlit visualization
 ├── data/
 │   └── sample_signals.json
+├── tests/
+│   ├── conftest.py        # Test configuration
+│   ├── test_analyzer.py   # 18 tests — category matching, severity, integration
+│   ├── test_scorer.py     # 12 tests — priority scoring, recency, ranking
+│   └── test_models.py     #  6 tests — Pydantic validation
 ├── config.py
 ├── requirements.txt
 └── README.md
