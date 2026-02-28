@@ -20,7 +20,7 @@ RISK_QUERIES = [
 ]
 
 
-def fetch_news(query: str, lang: str = "en", max_results: int = 5) -> List[dict]:
+def fetch_news(query: str, lang: str = "en", country: Optional[str] = None, max_results: int = 5) -> List[dict]:
     """Fetch news articles from GNews API."""
     url = f"{GNEWS_BASE_URL}/search"
     params = {
@@ -29,6 +29,8 @@ def fetch_news(query: str, lang: str = "en", max_results: int = 5) -> List[dict]
         "max": max_results,
         "token": GNEWS_API_KEY,
     }
+    if country:
+        params["country"] = country
     try:
         resp = httpx.get(url, params=params, timeout=10)
         resp.raise_for_status()
@@ -62,12 +64,12 @@ def article_to_signal(article: dict, idx: int) -> Optional[Signal]:
     )
 
 
-def fetch_risk_news(lang: str = "en", per_query: int = 3) -> List[Signal]:
+def fetch_risk_news(lang: str = "en", country: Optional[str] = None, per_query: int = 3) -> List[Signal]:
     """Fetch news for all risk categories and return as Signal list."""
     signals = []
     idx = 1
     for query in RISK_QUERIES:
-        articles = fetch_news(query, lang=lang, max_results=per_query)
+        articles = fetch_news(query, lang=lang, country=country, max_results=per_query)
         for article in articles:
             sig = article_to_signal(article, idx)
             if sig:

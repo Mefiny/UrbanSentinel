@@ -100,7 +100,7 @@ uvicorn backend.main:app --reload
 
 ## Testing
 
-72 unit tests covering all core modules:
+75 unit tests covering all core modules:
 
 ```bash
 pytest tests/ -v
@@ -109,12 +109,12 @@ pytest tests/ -v
 ```
 tests/test_analyzer.py       — 23 tests (category matching, severity, hybrid pipeline, Chinese signals)
 tests/test_language.py       — 10 tests (language detection, Chinese keyword matching)
-tests/test_news_fetcher.py   — 11 tests (article conversion, API fetch, aggregation)
+tests/test_news_fetcher.py   — 14 tests (article conversion, API fetch, country filter, aggregation)
 tests/test_ml_classifier.py  — 10 tests (TF-IDF prediction, preprocessing, confidence)
 tests/test_scorer.py         — 12 tests (recency weight, priority computation, ranking)
 tests/test_models.py         —  6 tests (Pydantic validation, boundary checks)
 
-============================== 72 passed ==============================
+============================== 75 passed ==============================
 ```
 
 ---

@@ -76,6 +76,18 @@ signals = [Signal(**s) for s in raw_signals]
 # ── Sidebar ──────────────────────────────────────────────────
 st.sidebar.header("Controls")
 run_analysis = st.sidebar.button("Run AI Analysis", type="primary")
+
+# News settings
+st.sidebar.markdown("---")
+st.sidebar.subheader("Live News Settings")
+NEWS_COUNTRIES = {
+    "Any": None, "China": "cn", "United States": "us", "United Kingdom": "gb",
+    "Japan": "jp", "South Korea": "kr", "Singapore": "sg", "Australia": "au",
+    "India": "in", "Germany": "de", "France": "fr", "Canada": "ca",
+}
+NEWS_LANGS = {"English": "en", "Chinese": "zh", "Japanese": "ja", "Korean": "ko", "French": "fr", "German": "de"}
+news_country_label = st.sidebar.selectbox("Country / Region", list(NEWS_COUNTRIES.keys()), index=0)
+news_lang_label = st.sidebar.selectbox("Language", list(NEWS_LANGS.keys()), index=0)
 fetch_news_btn = st.sidebar.button("Fetch Live News")
 st.sidebar.markdown("---")
 st.sidebar.metric("Total Signals", len(signals))
@@ -104,7 +116,9 @@ if "news_signals" not in st.session_state:
 if fetch_news_btn:
     with st.sidebar:
         with st.spinner("Fetching live news..."):
-            news_sigs = fetch_risk_news(lang="en", per_query=3)
+            sel_lang = NEWS_LANGS[news_lang_label]
+            sel_country = NEWS_COUNTRIES[news_country_label]
+            news_sigs = fetch_risk_news(lang=sel_lang, country=sel_country, per_query=3)
             st.session_state.news_signals = news_sigs
             if news_sigs:
                 st.success(f"Fetched {len(news_sigs)} news signals")

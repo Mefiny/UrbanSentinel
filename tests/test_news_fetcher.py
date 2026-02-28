@@ -77,6 +77,27 @@ class TestFetchNews:
         assert result == []
 
 
+    @patch("backend.news_fetcher.httpx.get")
+    def test_country_param_passed(self, mock_get):
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = {"articles": [SAMPLE_ARTICLE]}
+        mock_resp.raise_for_status = MagicMock()
+        mock_get.return_value = mock_resp
+        fetch_news("crime", country="cn")
+        call_kwargs = mock_get.call_args
+        assert call_kwargs[1]["params"]["country"] == "cn"
+
+    @patch("backend.news_fetcher.httpx.get")
+    def test_no_country_param_when_none(self, mock_get):
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = {"articles": []}
+        mock_resp.raise_for_status = MagicMock()
+        mock_get.return_value = mock_resp
+        fetch_news("crime", country=None)
+        call_kwargs = mock_get.call_args
+        assert "country" not in call_kwargs[1]["params"]
+
+
 class TestFetchRiskNews:
     @patch("backend.news_fetcher.fetch_news")
     def test_aggregates_all_queries(self, mock_fn):
@@ -90,3 +111,11 @@ class TestFetchRiskNews:
         mock_fn.return_value = []
         signals = fetch_risk_news()
         assert signals == []
+
+    @patch("backend.news_fetcher.fetch_news")
+    def test_country_passed_to_fetch(self, mock_fn):
+        mock_fn.return_value = [SAMPLE_ARTICLE]
+        fetch_risk_news(lang="zh", country="cn", per_query=1)
+        for call in mock_fn.call_args_list:
+            assert call[1]["lang"] == "zh"
+            assert call[1]["country"] == "cn"
