@@ -1,0 +1,97 @@
+import re
+from backend.models import RiskAnalysis, RiskCategory, EconomicImpact, Signal
+
+
+# ── Keyword rules for classification ─────────────────────────
+CATEGORY_KEYWORDS = {
+    RiskCategory.crime: [
+        "robbery", "robber", "theft", "steal", "shoplifting",
+        "violence", "assault", "murder", "drug", "vandalism",
+        "pickpocket", "gang", "hit-and-run", "domestic violence",
+    ],
+    RiskCategory.traffic: [
+        "traffic", "accident", "pileup", "collision", "gridlock",
+        "lane closed", "lane blocked", "delays", "suspended",
+        "bus", "subway", "metro", "commuter", "expressway",
+        "brake failure", "signal malfunction",
+    ],
+    RiskCategory.fraud: [
+        "scam", "fraud", "phishing", "fake", "identity theft",
+        "cryptocurrency", "ponzi", "impersonat",
+        "investment fraud",
+    ],
+    RiskCategory.infrastructure: [
+        "collapse", "crack", "sinkhole", "flood", "power outage",
+        "water main", "gas leak", "pothole", "bridge",
+        "elevator", "street light", "outage", "burst",
+        "dumping", "railing", "building inspector",
+    ],
+}
+
+# Severity escalation keywords
+HIGH_SEVERITY = [
+    "injur", "killed", "death", "collapse", "armed", "trapped",
+    "child", "hospital", "emergency", "critical", "surge",
+    "12,000", "thousands", "$2M", "flood warning",
+]
+MEDIUM_SEVERITY = [
+    "closed", "blocked", "suspended", "multiple", "increased",
+    "malfunction", "failure", "outage", "damage", "hazard",
+]
+
+
+def _match_category(text: str) -> tuple[RiskCategory, list[str]]:
+    """Match text against keyword rules, return category and matched keywords."""
+    text_lower = text.lower()
+    best_cat = RiskCategory.infrastructure
+    best_score = 0
+    matched_kw: list[str] = []
+
+    for cat, keywords in CATEGORY_KEYWORDS.items():
+        hits = [kw for kw in keywords if kw in text_lower]
+        if len(hits) > best_score:
+            best_score = len(hits)
+            best_cat = cat
+            matched_kw = hits
+
+    return best_cat, matched_kw[:5]
+
+
+def _assess_severity(text: str) -> tuple[int, EconomicImpact]:
+    """Assess risk level (1-5) and economic impact from text."""
+    text_lower = text.lower()
+    high_hits = sum(1 for kw in HIGH_SEVERITY if kw in text_lower)
+    med_hits = sum(1 for kw in MEDIUM_SEVERITY if kw in text_lower)
+
+    if high_hits >= 2:
+        return 5, EconomicImpact.high
+    elif high_hits == 1:
+        return 4, EconomicImpact.high
+    elif med_hits >= 2:
+        return 3, EconomicImpact.medium
+    elif med_hits == 1:
+        return 2, EconomicImpact.medium
+    return 1, EconomicImpact.low
+
+
+def analyze_signal(signal: Signal) -> RiskAnalysis:
+    """Analyze a signal using keyword-based NLP (no external API needed)."""
+    text = signal.text
+    category, keywords = _match_category(text)
+    risk_level, economic_impact = _assess_severity(text)
+
+    # Confidence based on keyword match strength
+    confidence = min(0.95, 0.5 + len(keywords) * 0.1)
+
+    # Generate summary from first sentence
+    first_sentence = text.split(".")[0].strip()
+    summary = f"{category.value} risk detected: {first_sentence}."
+
+    return RiskAnalysis(
+        category=category,
+        risk_level=risk_level,
+        economic_impact=economic_impact,
+        confidence=round(confidence, 2),
+        keywords=keywords if keywords else [category.value.lower()],
+        summary=summary,
+    )

@@ -1,0 +1,212 @@
+[
+  {
+    "id": "SIG-001",
+    "text": "Multiple residents report a large crack appearing on the Riverside Bridge overpass. Structural integrity may be compromised.",
+    "source": "citizen_report",
+    "location": "District A",
+    "timestamp": "2026-02-27T08:15:00"
+  },
+  {
+    "id": "SIG-002",
+    "text": "Police investigating a series of armed robberies near Central Market over the past 48 hours.",
+    "source": "news",
+    "location": "District B",
+    "timestamp": "2026-02-27T09:30:00"
+  },
+  {
+    "id": "SIG-003",
+    "text": "Major water main burst on 5th Avenue causing flooding in residential area. Road closed.",
+    "source": "government",
+    "location": "District C",
+    "timestamp": "2026-02-27T10:00:00"
+  },
+  {
+    "id": "SIG-004",
+    "text": "Residents warned about phone scam targeting elderly citizens pretending to be tax officials.",
+    "source": "news",
+    "location": "District A",
+    "timestamp": "2026-02-27T10:45:00"
+  },
+  {
+    "id": "SIG-005",
+    "text": "Traffic signal malfunction at 3 major intersections causing gridlock during rush hour.",
+    "source": "social_media",
+    "location": "District D",
+    "timestamp": "2026-02-27T07:50:00"
+  },
+  {
+    "id": "SIG-006",
+    "text": "Abandoned building partially collapsed on Oak Street. No injuries reported but area cordoned off.",
+    "source": "government",
+    "location": "District B",
+    "timestamp": "2026-02-27T11:20:00"
+  },
+  {
+    "id": "SIG-007",
+    "text": "Online investment fraud ring exposed, over 200 victims reported losses totaling $2M.",
+    "source": "news",
+    "location": "District E",
+    "timestamp": "2026-02-27T12:00:00"
+  },
+  {
+    "id": "SIG-008",
+    "text": "Subway Line 3 suspended due to electrical fault. Thousands of commuters stranded.",
+    "source": "government",
+    "location": "District A",
+    "timestamp": "2026-02-27T08:30:00"
+  },
+  {
+    "id": "SIG-009",
+    "text": "Vandalism and graffiti reported across multiple schools in the eastern district overnight.",
+    "source": "citizen_report",
+    "location": "District E",
+    "timestamp": "2026-02-27T06:45:00"
+  },
+  {
+    "id": "SIG-010",
+    "text": "Gas leak detected near residential complex on Maple Drive. Fire department on scene.",
+    "source": "news",
+    "location": "District C",
+    "timestamp": "2026-02-27T13:10:00"
+  },
+  {
+    "id": "SIG-011",
+    "text": "Sinkhole opened on Highway 7 near downtown exit. Two lanes closed, heavy delays expected.",
+    "source": "government",
+    "location": "District D",
+    "timestamp": "2026-02-27T14:00:00"
+  },
+  {
+    "id": "SIG-012",
+    "text": "Pickpocketing incidents surge 40% at Metro Station B according to transit police data.",
+    "source": "news",
+    "location": "District B",
+    "timestamp": "2026-02-27T09:00:00"
+  },
+  {
+    "id": "SIG-013",
+    "text": "Fake charity scam circulating on social media collecting donations for non-existent disaster relief.",
+    "source": "social_media",
+    "location": "District A",
+    "timestamp": "2026-02-27T15:30:00"
+  },
+  {
+    "id": "SIG-014",
+    "text": "Power outage affecting 12,000 households in northern district. Utility company estimates 6-hour repair.",
+    "source": "government",
+    "location": "District E",
+    "timestamp": "2026-02-27T16:00:00"
+  },
+  {
+    "id": "SIG-015",
+    "text": "Hit-and-run accident on School Zone Road during dismissal time. One child injured.",
+    "source": "citizen_report",
+    "location": "District C",
+    "timestamp": "2026-02-27T15:45:00"
+  },
+  {
+    "id": "SIG-016",
+    "text": "Illegal dumping of construction waste reported in public park. Environmental hazard concern.",
+    "source": "citizen_report",
+    "location": "District D",
+    "timestamp": "2026-02-27T07:20:00"
+  },
+  {
+    "id": "SIG-017",
+    "text": "Phishing emails impersonating city government requesting personal data from residents.",
+    "source": "government",
+    "location": "District B",
+    "timestamp": "2026-02-27T11:00:00"
+  },
+  {
+    "id": "SIG-018",
+    "text": "Severe pothole cluster on Main Street causing vehicle damage. Multiple complaints filed.",
+    "source": "citizen_report",
+    "location": "District A",
+    "timestamp": "2026-02-27T08:00:00"
+  },
+  {
+    "id": "SIG-019",
+    "text": "Street light outage spanning 2km stretch on Industrial Road. Pedestrian safety at risk after dark.",
+    "source": "citizen_report",
+    "location": "District D",
+    "timestamp": "2026-02-27T18:30:00"
+  },
+  {
+    "id": "SIG-020",
+    "text": "Domestic violence calls increased 25% in District C this month per police blotter.",
+    "source": "news",
+    "location": "District C",
+    "timestamp": "2026-02-27T10:15:00"
+  },
+  {
+    "id": "SIG-021",
+    "text": "Elevator malfunction traps 6 people in government office building for 2 hours.",
+    "source": "news",
+    "location": "District A",
+    "timestamp": "2026-02-27T14:20:00"
+  },
+  {
+    "id": "SIG-022",
+    "text": "Drug dealing activity reported near elementary school playground by multiple parents.",
+    "source": "citizen_report",
+    "location": "District B",
+    "timestamp": "2026-02-27T16:30:00"
+  },
+  {
+    "id": "SIG-023",
+    "text": "Flash flood warning issued for low-lying areas. Storm drains overwhelmed in District D.",
+    "source": "government",
+    "location": "District D",
+    "timestamp": "2026-02-27T17:00:00"
+  },
+  {
+    "id": "SIG-024",
+    "text": "Identity theft ring targeting university students through fake job postings uncovered.",
+    "source": "news",
+    "location": "District E",
+    "timestamp": "2026-02-27T11:45:00"
+  },
+  {
+    "id": "SIG-025",
+    "text": "Bus route 42 suspended after driver reports brake failure. Vehicle under inspection.",
+    "source": "government",
+    "location": "District C",
+    "timestamp": "2026-02-27T09:15:00"
+  },
+  {
+    "id": "SIG-026",
+    "text": "Roof collapse at indoor market injures 3 vendors. Building inspector finds code violations.",
+    "source": "news",
+    "location": "District B",
+    "timestamp": "2026-02-27T12:30:00"
+  },
+  {
+    "id": "SIG-027",
+    "text": "Cryptocurrency scam promoted via local radio station targets retirees with fake returns.",
+    "source": "social_media",
+    "location": "District E",
+    "timestamp": "2026-02-27T13:45:00"
+  },
+  {
+    "id": "SIG-028",
+    "text": "Pedestrian bridge railing loose and wobbling. High foot traffic area near hospital.",
+    "source": "citizen_report",
+    "location": "District A",
+    "timestamp": "2026-02-27T07:30:00"
+  },
+  {
+    "id": "SIG-029",
+    "text": "Multi-vehicle pileup on expressway due to fog. Emergency services dispatched, 2 lanes blocked.",
+    "source": "government",
+    "location": "District D",
+    "timestamp": "2026-02-27T06:50:00"
+  },
+  {
+    "id": "SIG-030",
+    "text": "Shoplifting gang targeting electronics stores across District B. Coordinated theft pattern observed.",
+    "source": "news",
+    "location": "District B",
+    "timestamp": "2026-02-27T15:00:00"
+  }
+]
