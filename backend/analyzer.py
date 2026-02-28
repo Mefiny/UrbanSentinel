@@ -2,6 +2,7 @@ import re
 from typing import List, Tuple
 from backend.models import RiskAnalysis, RiskCategory, EconomicImpact, Signal
 from backend.ml_classifier import get_classifier
+from backend.language import detect_language, match_zh_category
 
 
 # ── Keyword rules for classification ─────────────────────────
@@ -41,6 +42,16 @@ MEDIUM_SEVERITY = [
     "malfunction", "failure", "outage", "damage", "hazard",
 ]
 
+# Chinese severity keywords
+ZH_HIGH_SEVERITY = [
+    "受伤", "死亡", "坍塌", "持械", "被困",
+    "儿童", "医院", "紧急", "危急", "数千",
+]
+ZH_MEDIUM_SEVERITY = [
+    "封闭", "阻断", "停运", "多起", "增加",
+    "故障", "损坏", "危险", "中断",
+]
+
 
 def _match_category(text: str) -> Tuple[RiskCategory, List[str]]:
     """Match text against keyword rules, return category and matched keywords."""
@@ -59,11 +70,16 @@ def _match_category(text: str) -> Tuple[RiskCategory, List[str]]:
     return best_cat, matched_kw[:5]
 
 
-def _assess_severity(text: str) -> Tuple[int, EconomicImpact]:
+def _assess_severity(text: str, lang: str = "en") -> Tuple[int, EconomicImpact]:
     """Assess risk level (1-5) and economic impact from text."""
     text_lower = text.lower()
-    high_hits = sum(1 for kw in HIGH_SEVERITY if kw in text_lower)
-    med_hits = sum(1 for kw in MEDIUM_SEVERITY if kw in text_lower)
+
+    if lang == "zh":
+        high_hits = sum(1 for kw in ZH_HIGH_SEVERITY if kw in text)
+        med_hits = sum(1 for kw in ZH_MEDIUM_SEVERITY if kw in text)
+    else:
+        high_hits = sum(1 for kw in HIGH_SEVERITY if kw in text_lower)
+        med_hits = sum(1 for kw in MEDIUM_SEVERITY if kw in text_lower)
 
     if high_hits >= 2:
         return 5, EconomicImpact.high
@@ -76,9 +92,12 @@ def _assess_severity(text: str) -> Tuple[int, EconomicImpact]:
     return 1, EconomicImpact.low
 
 
-def _hybrid_classify(text: str) -> Tuple[RiskCategory, List[str], float]:
+def _hybrid_classify(text: str, lang: str = "en") -> Tuple[RiskCategory, List[str], float]:
     """Combine keyword matching (60%) with ML prediction (40%) for classification."""
-    kw_category, keywords = _match_category(text)
+    if lang == "zh":
+        kw_category, keywords = match_zh_category(text)
+    else:
+        kw_category, keywords = _match_category(text)
     kw_confidence = min(0.95, 0.5 + len(keywords) * 0.1)
 
     clf = get_classifier()
@@ -92,8 +111,8 @@ def _hybrid_classify(text: str) -> Tuple[RiskCategory, List[str], float]:
         # Strong keyword match wins
         final_category = kw_category
         final_confidence = kw_confidence * 0.7 + ml_confidence * 0.3
-    elif ml_confidence > 0.6:
-        # ML is confident and keywords are weak
+    elif ml_confidence > 0.6 and lang == "en":
+        # ML is confident and keywords are weak (EN only — ML trained on English)
         final_category = ml_category
         final_confidence = ml_confidence * 0.6 + kw_confidence * 0.4
     else:
@@ -107,12 +126,17 @@ def _hybrid_classify(text: str) -> Tuple[RiskCategory, List[str], float]:
 def analyze_signal(signal: Signal) -> RiskAnalysis:
     """Analyze a signal using hybrid keyword + ML classification."""
     text = signal.text
-    category, keywords, confidence = _hybrid_classify(text)
-    risk_level, economic_impact = _assess_severity(text)
+    lang = detect_language(text)
+    category, keywords, confidence = _hybrid_classify(text, lang=lang)
+    risk_level, economic_impact = _assess_severity(text, lang=lang)
 
     # Generate summary from first sentence
-    first_sentence = text.split(".")[0].strip()
-    summary = f"{category.value} risk detected: {first_sentence}."
+    if lang == "zh":
+        first_sentence = text.split("。")[0].strip()
+        summary = f"{category.value} 风险检测: {first_sentence}。"
+    else:
+        first_sentence = text.split(".")[0].strip()
+        summary = f"{category.value} risk detected: {first_sentence}."
 
     return RiskAnalysis(
         category=category,

@@ -4,9 +4,11 @@ from pathlib import Path
 from datetime import datetime
 from typing import List
 
+import numpy as np
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
 # Allow imports from project root
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -19,7 +21,7 @@ DATA_PATH = Path(__file__).parent.parent / "data" / "sample_signals.json"
 
 st.set_page_config(
     page_title="UrbanSentinel",
-    page_icon="🏙️",
+    page_icon="US",
     layout="wide",
 )
 
@@ -54,7 +56,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🏙️ UrbanSentinel")
+st.title("UrbanSentinel")
 st.caption("AI-powered urban risk detection, classification, and prioritization — SDG 11 & 16")
 
 # ── Load signals ──────────────────────────────────────────────
@@ -68,14 +70,14 @@ raw_signals = load_signals()
 signals = [Signal(**s) for s in raw_signals]
 
 # ── Sidebar ──────────────────────────────────────────────────
-st.sidebar.header("⚙️ Controls")
-run_analysis = st.sidebar.button("🔍 Run AI Analysis", type="primary")
+st.sidebar.header("Controls")
+run_analysis = st.sidebar.button("Run AI Analysis", type="primary")
 st.sidebar.markdown("---")
 st.sidebar.metric("Total Signals", len(signals))
 
 # Filters
 st.sidebar.markdown("---")
-st.sidebar.subheader("🔎 Filters")
+st.sidebar.subheader("Filters")
 filter_categories = st.sidebar.multiselect(
     "Risk Category",
     options=[c.value for c in RiskCategory],
@@ -92,7 +94,7 @@ filter_risk_min, filter_risk_max = st.sidebar.slider(
 
 # ── Tabs ──────────────────────────────────────────────────────
 tab_overview, tab_alerts, tab_charts, tab_submit = st.tabs(
-    ["📋 Signal Overview", "🚨 AI Risk Alerts", "📊 Analytics", "➕ Submit Signal"]
+    ["Signal Overview", "AI Risk Alerts", "Analytics", "Submit Signal"]
 )
 
 # ── Tab 1: Raw signal table ──────────────────────────────────
@@ -159,7 +161,7 @@ with tab_alerts:
             })
         df_export = pd.DataFrame(export_data)
         st.download_button(
-            "📥 Export Alerts as CSV",
+            "Export Alerts as CSV",
             df_export.to_csv(index=False).encode("utf-8"),
             file_name="urbansentinel_alerts.csv",
             mime="text/csv",
@@ -170,7 +172,7 @@ with tab_alerts:
         # Alert cards
         for alert in alerts:
             risk = alert.analysis.risk_level
-            color = "🔴" if risk >= 4 else "🟡" if risk >= 3 else "🟢"
+            color = "[!]" if risk >= 4 else "[~]" if risk >= 3 else "[o]"
             with st.expander(
                 f"{color} Rank #{alert.rank} — {alert.signal.id} | "
                 f"Score: {alert.priority_score:.3f} | "
@@ -189,7 +191,27 @@ with tab_alerts:
                     st.markdown(f"**Keywords:** {', '.join(alert.analysis.keywords)}")
                 st.info(f"**AI Summary:** {alert.analysis.summary}")
     else:
-        st.info("Click **🔍 Run AI Analysis** in the sidebar to start.")
+        st.info("Click **Run AI Analysis** in the sidebar to start.")
+
+# ── Chart style helper ───────────────────────────────────────
+_BG = "#0e1117"
+_FG = "#c8d0d8"
+_GRID = "#1e2a38"
+_PALETTE = {
+    "crime": "#ef4444", "traffic": "#f59e0b",
+    "fraud": "#8b5cf6", "infrastructure": "#3b82f6",
+}
+_RISK_COLORS = ["#22c55e", "#84cc16", "#eab308", "#f97316", "#ef4444"]
+
+
+def _dark_fig(w=6, h=4):
+    fig, ax = plt.subplots(figsize=(w, h), facecolor=_BG)
+    ax.set_facecolor(_BG)
+    ax.tick_params(colors=_FG, labelsize=9)
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+    return fig, ax
+
 
 # ── Tab 3: Analytics ─────────────────────────────────────────
 with tab_charts:
@@ -200,55 +222,96 @@ with tab_charts:
     else:
         chart_col1, chart_col2 = st.columns(2)
 
-        # Category distribution pie chart
+        # ── Donut chart: category distribution ───────────────
         with chart_col1:
-            st.markdown("#### Risk Category Distribution")
+            st.markdown("#### Category Distribution")
             categories = [a.analysis.category.value for a in alerts]
             cat_counts = pd.Series(categories).value_counts()
-            fig1, ax1 = plt.subplots(figsize=(5, 4))
-            colors = ["#e74c3c", "#f39c12", "#3498db", "#2ecc71"]
-            ax1.pie(
+            cat_colors = [_PALETTE.get(c.lower().split()[0], "#64748b")
+                          for c in cat_counts.index]
+
+            fig1, ax1 = plt.subplots(figsize=(5, 4.5), facecolor=_BG)
+            ax1.set_facecolor(_BG)
+            wedges, texts, autotexts = ax1.pie(
                 cat_counts.values,
                 labels=cat_counts.index,
                 autopct="%1.0f%%",
-                colors=colors[: len(cat_counts)],
+                colors=cat_colors,
                 startangle=90,
+                pctdistance=0.78,
+                wedgeprops=dict(width=0.45, edgecolor=_BG, linewidth=2),
             )
-            ax1.set_title("Category Breakdown")
+            for t in texts:
+                t.set_color(_FG)
+                t.set_fontsize(9)
+            for t in autotexts:
+                t.set_color("white")
+                t.set_fontsize(10)
+                t.set_fontweight("bold")
+            centre = plt.Circle((0, 0), 0.35, fc=_BG)
+            ax1.add_artist(centre)
+            ax1.text(0, 0, str(len(alerts)), ha="center", va="center",
+                     fontsize=22, fontweight="bold", color="white")
+            ax1.text(0, -0.12, "signals", ha="center", va="center",
+                     fontsize=9, color=_FG)
             st.pyplot(fig1)
 
-        # Risk level bar chart
+        # ── Risk level bar chart ─────────────────────────────
         with chart_col2:
             st.markdown("#### Risk Level Distribution")
             levels = [a.analysis.risk_level for a in alerts]
-            level_counts = pd.Series(levels).value_counts().sort_index()
-            fig2, ax2 = plt.subplots(figsize=(5, 4))
-            bar_colors = ["#2ecc71", "#82e0aa", "#f4d03f", "#e67e22", "#e74c3c"]
-            ax2.bar(
-                level_counts.index,
-                level_counts.values,
-                color=[bar_colors[i - 1] for i in level_counts.index],
+            level_counts = pd.Series(levels).value_counts().reindex(
+                range(1, 6), fill_value=0
             )
-            ax2.set_xlabel("Risk Level")
-            ax2.set_ylabel("Count")
-            ax2.set_title("Signals by Risk Level")
+
+            fig2, ax2 = _dark_fig(5, 4.5)
+            bars = ax2.bar(
+                level_counts.index, level_counts.values,
+                color=[_RISK_COLORS[i - 1] for i in level_counts.index],
+                width=0.6, edgecolor=_BG, linewidth=1.5,
+                zorder=3,
+            )
+            for bar in bars:
+                h = bar.get_height()
+                if h > 0:
+                    ax2.text(bar.get_x() + bar.get_width() / 2, h + 0.15,
+                             str(int(h)), ha="center", va="bottom",
+                             color="white", fontsize=11, fontweight="bold")
+            ax2.set_xlabel("Risk Level", color=_FG, fontsize=10)
+            ax2.set_ylabel("Count", color=_FG, fontsize=10)
             ax2.set_xticks(range(1, 6))
+            ax2.set_xticklabels(["1\nLow", "2", "3\nMed", "4", "5\nHigh"],
+                                fontsize=8, color=_FG)
+            ax2.yaxis.grid(True, color=_GRID, linewidth=0.5, zorder=0)
+            ax2.set_axisbelow(True)
             st.pyplot(fig2)
 
         st.markdown("---")
 
-        # Location risk bar
-        st.markdown("#### Risk Signals by Location")
+        # ── Location horizontal bar ──────────────────────────
+        st.markdown("#### Signal Density by District")
         locations = [a.signal.location for a in alerts]
         loc_counts = pd.Series(locations).value_counts()
-        fig3, ax3 = plt.subplots(figsize=(10, 3))
-        ax3.barh(loc_counts.index, loc_counts.values, color="#3498db")
-        ax3.set_xlabel("Number of Signals")
-        ax3.set_title("Signal Density by District")
+
+        fig3, ax3 = _dark_fig(10, max(2.5, len(loc_counts) * 0.45))
+        y_pos = range(len(loc_counts))
+        ax3.barh(y_pos, loc_counts.values,
+                 color="#3b82f6", height=0.55, edgecolor=_BG,
+                 linewidth=1, zorder=3)
+        for i, v in enumerate(loc_counts.values):
+            ax3.text(v + 0.1, i, str(v), va="center",
+                     color="white", fontsize=10, fontweight="bold")
+        ax3.set_yticks(y_pos)
+        ax3.set_yticklabels(loc_counts.index, color=_FG, fontsize=9)
         ax3.invert_yaxis()
+        ax3.xaxis.grid(True, color=_GRID, linewidth=0.5, zorder=0)
+        ax3.set_axisbelow(True)
+        ax3.set_xlabel("Number of Signals", color=_FG, fontsize=10)
         st.pyplot(fig3)
 
-        # District risk summary table
+        st.markdown("---")
+
+        # ── District risk summary table ──────────────────────
         st.markdown("#### District Risk Summary")
         district_data = []
         for loc in sorted(set(a.signal.location for a in alerts)):
@@ -263,18 +326,74 @@ with tab_charts:
             })
         st.dataframe(pd.DataFrame(district_data), use_container_width=True, hide_index=True)
 
-        # Top 10 priority scores
+        st.markdown("---")
+
+        # ── Top 10 priority scores ───────────────────────────
         st.markdown("#### Top 10 Priority Alerts")
         top10 = alerts[:10]
-        fig4, ax4 = plt.subplots(figsize=(10, 4))
-        labels = [f"#{a.rank} {a.signal.id}" for a in top10]
+        fig4, ax4 = _dark_fig(10, max(3, len(top10) * 0.45))
+        labels = [f"#{a.rank}  {a.signal.id}" for a in top10]
         scores = [a.priority_score for a in top10]
-        bar_c = ["#e74c3c" if s > 0.7 else "#f39c12" if s > 0.5 else "#2ecc71" for s in scores]
-        ax4.barh(labels[::-1], scores[::-1], color=bar_c[::-1])
-        ax4.set_xlabel("Priority Score")
-        ax4.set_title("Highest Priority Signals")
-        ax4.set_xlim(0, 1)
+        bar_c = ["#ef4444" if s > 0.7 else "#f59e0b" if s > 0.5 else "#22c55e"
+                 for s in scores]
+        ax4.barh(labels[::-1], scores[::-1], color=bar_c[::-1],
+                 height=0.55, edgecolor=_BG, linewidth=1, zorder=3)
+        for i, s in enumerate(scores[::-1]):
+            ax4.text(s + 0.01, i, f"{s:.3f}", va="center",
+                     color="white", fontsize=9, fontweight="bold")
+        ax4.set_xlabel("Priority Score", color=_FG, fontsize=10)
+        ax4.set_xlim(0, 1.05)
+        ax4.xaxis.grid(True, color=_GRID, linewidth=0.5, zorder=0)
+        ax4.set_axisbelow(True)
+        ax4.tick_params(axis="y", labelsize=9, colors=_FG)
         st.pyplot(fig4)
+
+        st.markdown("---")
+
+        # ── Signal Timeline & Trend Prediction ─────────────
+        st.markdown("#### Signal Timeline & Anomaly Trend")
+        timestamps = [a.signal.timestamp for a in alerts]
+        ts_series = pd.Series(timestamps)
+        ts_hours = ts_series.dt.floor("h")
+        hourly_counts = ts_hours.value_counts().sort_index()
+
+        fig5, ax5 = _dark_fig(10, 4)
+        x_dates = hourly_counts.index.to_pydatetime()
+        y_vals = hourly_counts.values
+
+        # Actual signal counts
+        ax5.bar(x_dates, y_vals, width=0.03, color="#3b82f6",
+                edgecolor=_BG, linewidth=1, zorder=3, label="Signals/hour")
+
+        # Trend line using polynomial fit
+        if len(x_dates) >= 3:
+            x_num = np.arange(len(x_dates))
+            coeffs = np.polyfit(x_num, y_vals, deg=min(2, len(x_dates) - 1))
+            trend = np.polyval(coeffs, x_num)
+            ax5.plot(x_dates, trend, color="#f59e0b", linewidth=2.5,
+                     linestyle="--", zorder=4, label="Trend")
+
+            # Forecast next 3 hours
+            future_x = np.arange(len(x_dates), len(x_dates) + 3)
+            future_y = np.polyval(coeffs, future_x)
+            future_y = np.clip(future_y, 0, None)
+            last_dt = x_dates[-1]
+            future_dates = [last_dt + pd.Timedelta(hours=i+1) for i in range(3)]
+            ax5.plot(future_dates, future_y, color="#ef4444", linewidth=2.5,
+                     linestyle=":", zorder=4, label="Forecast")
+            ax5.scatter(future_dates, future_y, color="#ef4444",
+                        s=40, zorder=5, edgecolors="white", linewidths=0.8)
+
+        ax5.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+        ax5.tick_params(axis="x", rotation=45, colors=_FG, labelsize=8)
+        ax5.set_xlabel("Time", color=_FG, fontsize=10)
+        ax5.set_ylabel("Signal Count", color=_FG, fontsize=10)
+        ax5.yaxis.grid(True, color=_GRID, linewidth=0.5, zorder=0)
+        ax5.set_axisbelow(True)
+        ax5.legend(facecolor=_BG, edgecolor=_GRID, labelcolor=_FG,
+                   fontsize=8, loc="upper left")
+        fig5.tight_layout()
+        st.pyplot(fig5)
 
 # ── Tab 4: Submit Signal ─────────────────────────────────────
 with tab_submit:
@@ -289,7 +408,7 @@ with tab_submit:
             sig_location = st.text_input("Location", placeholder="e.g. District A")
         with fc2:
             sig_id = st.text_input("Signal ID", value=f"SIG-{len(signals)+1:03d}")
-        submitted = st.form_submit_button("🚀 Analyze Signal", type="primary")
+        submitted = st.form_submit_button("Analyze Signal", type="primary")
 
     if submitted and sig_text and sig_location:
         new_signal = Signal(
@@ -323,7 +442,7 @@ st.markdown("---")
 st.markdown("""
 <div style="text-align:center; padding: 20px 0; opacity: 0.8;">
     <p style="font-size: 0.95rem; margin-bottom: 4px;">
-        🌍 Aligned with <strong>UN SDG 11</strong> (Sustainable Cities) &amp;
+        Aligned with <strong>UN SDG 11</strong> (Sustainable Cities) &amp;
         <strong>SDG 16</strong> (Peace, Justice &amp; Strong Institutions)
     </p>
     <p style="font-size: 0.8rem; color: #888;">

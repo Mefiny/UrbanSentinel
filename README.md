@@ -16,8 +16,10 @@ UrbanSentinel transforms unstructured public signals into **prioritized, actiona
 
 The system:
 - Aggregates multi-source public text signals (news, citizen reports, social media, government)
+- Supports **multi-language input** (English and Chinese) with automatic language detection
 - Uses a **hybrid ML + keyword NLP engine** to extract structured risk metadata (category, severity, economic impact)
 - Computes weighted priority scores for institutional decision support
+- Provides **anomaly trend prediction** with time-series forecasting
 - Visualizes risk distribution via an interactive dashboard
 
 ---
@@ -62,6 +64,8 @@ Public Signals (news / reports / social / government)
 | Backend API | Python, FastAPI |
 | AI Engine | TF-IDF + Naive Bayes + Keyword Rules (hybrid) |
 | ML Framework | scikit-learn |
+| Language Detection | Regex-based CJK detection (EN/ZH) |
+| Trend Prediction | NumPy polynomial fitting + forecasting |
 | Scoring | Custom weighted priority algorithm |
 | Dashboard | Streamlit |
 | Data Processing | Pandas |
@@ -93,19 +97,20 @@ uvicorn backend.main:app --reload
 
 ## Testing
 
-46 unit tests covering all core modules:
+61 unit tests covering all core modules:
 
 ```bash
 pytest tests/ -v
 ```
 
 ```
-tests/test_analyzer.py       — 18 tests (category matching, severity, hybrid pipeline)
+tests/test_analyzer.py       — 23 tests (category matching, severity, hybrid pipeline, Chinese signals)
+tests/test_language.py       — 10 tests (language detection, Chinese keyword matching)
 tests/test_ml_classifier.py  — 10 tests (TF-IDF prediction, preprocessing, confidence)
 tests/test_scorer.py         — 12 tests (recency weight, priority computation, ranking)
 tests/test_models.py         —  6 tests (Pydantic validation, boundary checks)
 
-============================== 46 passed ==============================
+============================== 61 passed ==============================
 ```
 
 ---
@@ -130,6 +135,8 @@ Priority Score = 0.4 × Risk Level + 0.3 × Economic Impact + 0.2 × Source Cred
 ## Innovation
 
 - **Hybrid AI classification** — combines TF-IDF + Naive Bayes ML model with keyword rules for robust, explainable predictions
+- **Multi-language risk detection** — automatic language detection with Chinese keyword classification support
+- **Anomaly trend prediction** — time-series analysis with polynomial trend fitting and short-term forecasting
 - Goes beyond text classification — builds a **decision-support system**
 - Converts qualitative risk narratives into **quantifiable indicators**
 - Explainable scoring model (not a black box)
@@ -156,17 +163,19 @@ UrbanSentinel/
 │   ├── models.py           # Pydantic data schemas
 │   ├── analyzer.py         # Hybrid keyword + ML classifier
 │   ├── ml_classifier.py    # TF-IDF + Naive Bayes pipeline
+│   ├── language.py         # Multi-language detection (EN/ZH)
 │   └── scorer.py           # Priority scoring algorithm
 ├── dashboard/
 │   └── app.py            # Streamlit visualization
 ├── data/
-│   └── sample_signals.json
+│   └── sample_signals.json # 35 signals (EN + ZH)
 ├── tests/
 │   ├── conftest.py            # Test configuration
-│   ├── test_analyzer.py       # 18 tests — category matching, severity, integration
-│   ├── test_ml_classifier.py  # 10 tests — TF-IDF prediction, preprocessing
-│   ├── test_scorer.py         # 12 tests — priority scoring, recency, ranking
-│   └── test_models.py         #  6 tests — Pydantic validation
+│   ├── test_analyzer.py       # 23 tests
+│   ├── test_language.py       # 10 tests
+│   ├── test_ml_classifier.py  # 10 tests
+│   ├── test_scorer.py         # 12 tests
+│   └── test_models.py         #  6 tests
 ├── config.py
 ├── requirements.txt
 └── README.md
@@ -187,8 +196,8 @@ UrbanSentinel/
 
 - Real-time news API integration
 - Geospatial visualization with interactive maps
-- Multi-language risk detection
-- Anomaly trend prediction models
+- Extended multi-language support (Japanese, Korean, Arabic, etc.)
+- Deep learning anomaly detection models
 - Integration with city IoT sensor data
 
 ---

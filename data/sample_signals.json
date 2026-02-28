@@ -208,5 +208,40 @@
     "source": "news",
     "location": "District B",
     "timestamp": "2026-02-27T15:00:00"
+  },
+  {
+    "id": "SIG-031",
+    "text": "市中心发生持刀抢劫事件，一名受害者受伤送医。警方已封锁现场展开调查。",
+    "source": "news",
+    "location": "District A",
+    "timestamp": "2026-02-27T19:00:00"
+  },
+  {
+    "id": "SIG-032",
+    "text": "三号线地铁因信号故障停运，数千名乘客滞留站内，预计延误两小时。",
+    "source": "government",
+    "location": "District B",
+    "timestamp": "2026-02-27T08:45:00"
+  },
+  {
+    "id": "SIG-033",
+    "text": "多名居民举报电信诈骗，骗子冒充公安局要求转账。已有三人上当受骗。",
+    "source": "citizen_report",
+    "location": "District C",
+    "timestamp": "2026-02-27T14:30:00"
+  },
+  {
+    "id": "SIG-034",
+    "text": "暴雨导致老城区多处路面积水严重，部分地下车库被淹，居民紧急转移。",
+    "source": "government",
+    "location": "District D",
+    "timestamp": "2026-02-27T20:15:00"
+  },
+  {
+    "id": "SIG-035",
+    "text": "高速公路连环追尾事故，涉及五辆车，两条车道封闭，交通严重拥堵。",
+    "source": "social_media",
+    "location": "District E",
+    "timestamp": "2026-02-27T17:30:00"
   }
 ]

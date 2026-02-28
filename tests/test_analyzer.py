@@ -120,3 +120,32 @@ class TestAnalyzeSignal:
         sig = _make_signal("Sinkhole opened on Highway 7.")
         result = analyze_signal(sig)
         assert result.category.value in result.summary
+
+
+# ── Chinese signal analysis tests ─────────────────────────────
+
+class TestAnalyzeChineseSignal:
+    def test_zh_crime(self):
+        sig = _make_signal("市中心发生持刀抢劫事件，一名受害者受伤送医。")
+        result = analyze_signal(sig)
+        assert result.category == RiskCategory.crime
+
+    def test_zh_traffic(self):
+        sig = _make_signal("三号线地铁因信号故障停运，数千名乘客滞留。")
+        result = analyze_signal(sig)
+        assert result.category == RiskCategory.traffic
+
+    def test_zh_fraud(self):
+        sig = _make_signal("多名居民举报电信诈骗，骗子冒充公安局要求转账。")
+        result = analyze_signal(sig)
+        assert result.category == RiskCategory.fraud
+
+    def test_zh_infrastructure(self):
+        sig = _make_signal("暴雨导致路面积水严重，部分地下车库被淹。")
+        result = analyze_signal(sig)
+        assert result.category == RiskCategory.infrastructure
+
+    def test_zh_summary_format(self):
+        sig = _make_signal("高速公路连环追尾事故，交通严重拥堵。")
+        result = analyze_signal(sig)
+        assert "风险检测" in result.summary
