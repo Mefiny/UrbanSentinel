@@ -13,3 +13,12 @@ SOURCE_CREDIBILITY = {
     "citizen_report": 0.7,
     "social_media": 0.5,
 }
+
+# District coordinates (simulated urban layout)
+DISTRICT_COORDS = {
+    "District A": (31.2304, 121.4737),
+    "District B": (31.2390, 121.4990),
+    "District C": (31.2120, 121.4580),
+    "District D": (31.2500, 121.4400),
+    "District E": (31.2200, 121.5100),
+}

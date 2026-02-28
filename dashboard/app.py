@@ -9,6 +9,8 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+import folium
+from streamlit_folium import st_folium
 
 # Allow imports from project root
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -16,6 +18,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from backend.models import Signal, RiskAnalysis, PrioritizedAlert, SourceType, RiskCategory
 from backend.analyzer import analyze_signal
 from backend.scorer import prioritize_alerts
+from config import DISTRICT_COORDS
 
 DATA_PATH = Path(__file__).parent.parent / "data" / "sample_signals.json"
 
@@ -93,8 +96,8 @@ filter_risk_min, filter_risk_max = st.sidebar.slider(
 )
 
 # ── Tabs ──────────────────────────────────────────────────────
-tab_overview, tab_alerts, tab_charts, tab_submit = st.tabs(
-    ["Signal Overview", "AI Risk Alerts", "Analytics", "Submit Signal"]
+tab_overview, tab_alerts, tab_charts, tab_map, tab_submit = st.tabs(
+    ["Signal Overview", "AI Risk Alerts", "Analytics", "Risk Map", "Submit Signal"]
 )
 
 # ── Tab 1: Raw signal table ──────────────────────────────────
@@ -395,7 +398,85 @@ with tab_charts:
         fig5.tight_layout()
         st.pyplot(fig5)
 
-# ── Tab 4: Submit Signal ─────────────────────────────────────
+# ── Tab 4: Risk Map ───────────────────────────────────────────
+with tab_map:
+    st.subheader("Geospatial Risk Map")
+
+    if not alerts:
+        st.info("Run analysis first to see the risk map.")
+    else:
+        # Build folium map centered on Shanghai
+        center_lat = sum(c[0] for c in DISTRICT_COORDS.values()) / len(DISTRICT_COORDS)
+        center_lon = sum(c[1] for c in DISTRICT_COORDS.values()) / len(DISTRICT_COORDS)
+        m = folium.Map(location=[center_lat, center_lon], zoom_start=13,
+                       tiles="CartoDB dark_matter")
+
+        # Color by risk category
+        cat_colors = {
+            "Crime": "red", "Traffic": "orange",
+            "Fraud": "purple", "Infrastructure Failure": "blue",
+        }
+        risk_icons = {1: "info-sign", 2: "info-sign", 3: "warning-sign",
+                      4: "exclamation-sign", 5: "fire"}
+
+        for alert in alerts:
+            loc = alert.signal.location
+            if loc not in DISTRICT_COORDS:
+                continue
+            lat, lon = DISTRICT_COORDS[loc]
+            # Add small random offset so markers don't stack
+            import random
+            random.seed(hash(alert.signal.id))
+            lat += random.uniform(-0.003, 0.003)
+            lon += random.uniform(-0.003, 0.003)
+
+            cat = alert.analysis.category.value
+            risk = alert.analysis.risk_level
+            color = cat_colors.get(cat, "gray")
+
+            popup_html = (
+                f"<b>{alert.signal.id}</b><br>"
+                f"<b>Category:</b> {cat}<br>"
+                f"<b>Risk:</b> {risk}/5<br>"
+                f"<b>Score:</b> {alert.priority_score:.3f}<br>"
+                f"<b>Location:</b> {loc}<br>"
+                f"<small>{alert.signal.text[:80]}...</small>"
+            )
+
+            folium.CircleMarker(
+                location=[lat, lon],
+                radius=6 + risk * 3,
+                color=color,
+                fill=True,
+                fill_color=color,
+                fill_opacity=0.7,
+                popup=folium.Popup(popup_html, max_width=280),
+                tooltip=f"{alert.signal.id} | {cat} | Risk {risk}",
+            ).add_to(m)
+
+        # District labels
+        for name, (lat, lon) in DISTRICT_COORDS.items():
+            folium.Marker(
+                location=[lat, lon],
+                icon=folium.DivIcon(html=f'<div style="font-size:11px;color:#fff;'
+                                         f'font-weight:bold;text-shadow:1px 1px 2px #000">'
+                                         f'{name}</div>'),
+            ).add_to(m)
+
+        st_folium(m, use_container_width=True, height=520)
+
+        # Legend
+        st.markdown(
+            '<div style="display:flex;gap:16px;justify-content:center;padding:8px 0">'
+            '<span style="color:#ef4444">&#9679; Crime</span>'
+            '<span style="color:#f59e0b">&#9679; Traffic</span>'
+            '<span style="color:#8b5cf6">&#9679; Fraud</span>'
+            '<span style="color:#3b82f6">&#9679; Infrastructure</span>'
+            '</div>',
+            unsafe_allow_html=True,
+        )
+
+# ── Tab 5: Submit Signal ─────────────────────────────────────
 with tab_submit:
     st.subheader("Submit a New Signal")
     st.markdown("Simulate submitting a new public signal for AI analysis.")
