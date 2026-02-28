@@ -22,3 +22,7 @@ DISTRICT_COORDS = {
     "District D": (31.2500, 121.4400),
     "District E": (31.2200, 121.5100),
 }
+
+# GNews API configuration
+GNEWS_API_KEY = "015b1149112b44328b521e8f91406505"
+GNEWS_BASE_URL = "https://gnews.io/api/v4"

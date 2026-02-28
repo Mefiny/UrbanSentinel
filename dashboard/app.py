@@ -18,6 +18,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from backend.models import Signal, RiskAnalysis, PrioritizedAlert, SourceType, RiskCategory
 from backend.analyzer import analyze_signal
 from backend.scorer import prioritize_alerts
+from backend.news_fetcher import fetch_risk_news
 from config import DISTRICT_COORDS
 
 DATA_PATH = Path(__file__).parent.parent / "data" / "sample_signals.json"
@@ -75,6 +76,7 @@ signals = [Signal(**s) for s in raw_signals]
 # ── Sidebar ──────────────────────────────────────────────────
 st.sidebar.header("Controls")
 run_analysis = st.sidebar.button("Run AI Analysis", type="primary")
+fetch_news_btn = st.sidebar.button("Fetch Live News")
 st.sidebar.markdown("---")
 st.sidebar.metric("Total Signals", len(signals))
 
@@ -95,6 +97,24 @@ filter_risk_min, filter_risk_max = st.sidebar.slider(
     "Risk Level Range", 1, 5, (1, 5)
 )
 
+# ── Fetch Live News ───────────────────────────────────────────
+if "news_signals" not in st.session_state:
+    st.session_state.news_signals = []
+
+if fetch_news_btn:
+    with st.sidebar:
+        with st.spinner("Fetching live news..."):
+            news_sigs = fetch_risk_news(lang="en", per_query=3)
+            st.session_state.news_signals = news_sigs
+            if news_sigs:
+                st.success(f"Fetched {len(news_sigs)} news signals")
+            else:
+                st.warning("No news articles fetched. Check API key or network.")
+
+# Merge news signals into main list
+all_signals = signals + st.session_state.news_signals
+st.sidebar.metric("Live News", len(st.session_state.news_signals))
+
 # ── Tabs ──────────────────────────────────────────────────────
 tab_overview, tab_alerts, tab_charts, tab_map, tab_submit = st.tabs(
     ["Signal Overview", "AI Risk Alerts", "Analytics", "Risk Map", "Submit Signal"]
@@ -104,6 +124,14 @@ tab_overview, tab_alerts, tab_charts, tab_map, tab_submit = st.tabs(
 with tab_overview:
     st.subheader("Raw Public Signals")
     df_signals = pd.DataFrame(raw_signals)
+    # Append news signals if any
+    if st.session_state.news_signals:
+        news_rows = [
+            {"id": s.id, "text": s.text, "source": s.source.value,
+             "location": s.location, "timestamp": s.timestamp.isoformat()}
+            for s in st.session_state.news_signals
+        ]
+        df_signals = pd.concat([df_signals, pd.DataFrame(news_rows)], ignore_index=True)
     # Apply district filter to overview too
     df_filtered = df_signals[df_signals["location"].isin(filter_districts)]
     st.dataframe(df_filtered, use_container_width=True, hide_index=True)
@@ -118,13 +146,13 @@ with tab_alerts:
     if run_analysis:
         pairs = []
         progress = st.progress(0, text="Analyzing signals...")
-        for i, sig in enumerate(signals):
+        for i, sig in enumerate(all_signals):
             try:
                 analysis = analyze_signal(sig)
                 pairs.append((sig, analysis))
             except Exception as e:
                 st.warning(f"Skipped {sig.id}: {e}")
-            progress.progress((i + 1) / len(signals), text=f"Analyzed {i+1}/{len(signals)}")
+            progress.progress((i + 1) / len(all_signals), text=f"Analyzed {i+1}/{len(all_signals)}")
         progress.empty()
         st.session_state.alerts = prioritize_alerts(pairs)
         st.success(f"Analysis complete — {len(pairs)} signals processed")
